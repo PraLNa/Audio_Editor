@@ -45,9 +45,6 @@ class AudioManager:
         if not os.path.isfile(path):
             raise FileNotFoundError(f"Файл не найден: {path}")
 
-        self.file_path = path
-        self.audio = AudioSegment.from_file(path)
-
     def play(self) -> None:
         '''
         Воспроизводит загруженный ауиофайл
@@ -56,13 +53,26 @@ class AudioManager:
         '''
         if self.play_obj is not None and self.play_obj.is_playing():
             self.play_obj.stop()
+        # if self.audio:
+        #     # ПОлучаем байты для передачи в simlpe audio
+        #     data = self.audio.raw_data
+        #     # Создаем новый объект PlayObject для воспроизведения
+        #     self.play_obj = sa.play_buffer(data, num_channels=self.audio.channels,
+        #                                    bytes_per_sample=self.audio.sample_width,
+        #                                    sample_rate=self.audio.frame_rate)
+        # если аудио загружено — запускаем новое воспроизведение
         if self.audio:
-            # ПОлучаем байты для передачи в simlpe audio
-            data = self.audio.raw_data
-            # Создаем новый объект PlayObject для воспроизведения
-            self.play_obj = sa.play_buffer(data, num_channels=self.audio.channels,
-                                           bytes_per_sample=self.audio.sample_width,
-                                           sample_rate=self.audio.frame_rate)
+            # получаем "сырые" байты для передачи в simpleaudio
+            raw_data = self.audio.raw_data
+            # частота дискретизации
+            sample_rate = self.audio.frame_rate
+            # количество каналов (1 — моно, 2 — стерео)
+            num_channels = self.audio.channels
+            # количество байт на сэмпл
+            bytes_per_sample = self.audio.sample_width
+            # создаём и запускаем PlayObject
+            self.play_obj = sa.play_buffer(raw_data, num_channels, bytes_per_sample,
+                                               sample_rate)
         else:
             print('Аудиофайл не загружен')
 
@@ -92,7 +102,8 @@ class AudioManager:
         if self.audio is None:
             raise RuntimeError("Аудиофайл не загружен")
 
-        self.audio = self.audio.reverse()
+        if self.audio:
+            self.audio = self.audio.reverse()
 
 
         # По читать про reverse библеотеки pydub. Сделать проверку типу если аудио не загружено,
