@@ -6,6 +6,12 @@ from typing import Optional
 import self
 from pydub import AudioSegment
 import simpleaudio as sa
+from pydub.utils import which
+
+# ЯВНО указываем путь к ffmpeg/ffprobe, если они в PATH — which найдёт сам
+# AudioSegment.converter = r"C:\ffmpeg\bin\ffmpeg.exe"
+# AudioSegment.ffprobe   = r"C:\ffmpeg\bin\ffprobe.exe"
+
 
 """
     Класс AudioManager отвечает за всю логику обработки аудио:
@@ -59,74 +65,77 @@ class AudioManager:
                                            sample_rate=self.audio.frame_rate)
         else:
             print('Аудиофайл не загружен')
-            
+
         # Надо получить "сырые" байты аудио. Сделать проверку, что аудиофайл загружен.
         # Почитать как запустить буферное воспроизведение
 
 
-def stop(self) -> None:
-    """
-            Останавливает воспроизведение, если оно запущено.
-            """
-    if self.play_obj is not None and self.play_obj.is_playing():
-        self.play_obj.stop()
-        self.play_obj = None
-    else:
-        print('Воспроизведение не запущено')
-    # Реализовать метод по остановкке аудио, сделать проверку,
-    # что если аудио не запущено выдавать сообщение
+    def stop(self) -> None:
+        """
+                Останавливает воспроизведение, если оно запущено.
+                """
+        if self.play_obj is not None and self.play_obj.is_playing():
+            self.play_obj.stop()
+            self.play_obj = None
+        else:
+            print('Воспроизведение не запущено')
+        # Реализовать метод по остановкке аудио, сделать проверку,
+        # что если аудио не запущено выдавать сообщение
 
 
-def reversed(self) -> None:
-    """
-            Применяет эффект реверса (звук задом наперёд).
+    def reverse(self) -> None:
+        """
+                Применяет эффект реверса (звук задом наперёд).
 
-            :raises: RuntimeError, если аудио не загружено
-            """
-    if self.audio is None:
-        raise RuntimeError("Аудиофайл не загружен")
+                :raises: RuntimeError, если аудио не загружено
+                """
+        if self.audio is None:
+            raise RuntimeError("Аудиофайл не загружен")
 
-    self.audio = self.audio.reverse()
+        self.audio = self.audio.reverse()
 
-# По читать про reverse библеотеки pydub. Сделать проверку типу если аудио не загружено,
-# то выдовать сообщение
 
-def change_volume(self, db: float) -> None:
-    """
-            Изменяет громкость аудио.
+        # По читать про reverse библеотеки pydub. Сделать проверку типу если аудио не загружено,
+        # то выдовать сообщение
 
-            :param db: изменение громкости в децибелах (положительное значение увеличивает громкость,
-                       отрицательное - уменьшает)
+    def change_volume(self, db: float) -> None:
+        """
+                Изменяет громкость аудио.
+
+                :param db: изменение громкости в децибелах (положительное значение увеличивает
+                громкость,
+                        отрицательное - уменьшает)
+                :raises RuntimeError: если аудио не загружено
+                """
+        if self.audio is None:
+            raise RuntimeError("Аудиофайл не загружен")
+
+        self.audio = self.audio + db
+
+
+    def trim(self, start_time: int, end_time: int) -> None:
+        """
+            Обрезает аудио до указанного диапазона времени.
+
+            :param start_time: начальное время обрезки в миллисекундах
+            :param end_time: конечное время обрезки в миллисекундах
             :raises RuntimeError: если аудио не загружено
             """
-    if self.audio is None:
-        raise RuntimeError("Аудиофайл не загружен")
+        if self.audio is None:
+            raise RuntimeError("Аудиофайл не загружен")
 
-    self.audio = self.audio + db
+        self.audio = self.audio[start_time:end_time]
 
-def trim(self, start_time: int, end_time: int) -> None:
-    """
-           Обрезает аудио до указанного диапазона времени.
 
-           :param start_time: начальное время обрезки в миллисекундах
-           :param end_time: конечное время обрезки в миллисекундах
-           :raises RuntimeError: если аудио не загружено
-           """
-    if self.audio is None:
-        raise RuntimeError("Аудиофайл не загружен")
+    def save(self, output_path: str) -> None:
+        """
+                Сохраняет измененный аудиофайл в указанный путь.
 
-    self.audio = self.audio[start_time:end_time]
+                :param output_path: путь для сохранения файла
+                :raises RuntimeError: если аудио не загружено
+                """
 
-def save(self, output_path: str) -> None:
-    """
-            Сохраняет измененный аудиофайл в указанный путь.
+        if self.audio is None:
+            raise RuntimeError("Аудиофайл не загружен")
 
-            :param output_path: путь для сохранения файла
-            :raises RuntimeError: если аудио не загружено
-            """
-
-    if self.audio is None:
-        raise RuntimeError("Аудиофайл не загружен")
-
-    self.audio.export(output_path, format=os.path.splitext(output_path)[1][1:])
-            
+        self.audio.export(output_path, format=os.path.splitext(output_path)[1][1:])
