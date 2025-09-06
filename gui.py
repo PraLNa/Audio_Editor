@@ -27,7 +27,9 @@ class Audio_Editor:
         # заголовок окна
         self.root.title("Audio Editor")
         # размер окна
-        self.root.geometry("600x400")
+        self.root.geometry("800x600")
+        # цвет окна
+        self.color
         # экземпляр менеджера аудио
         self.manager = AudioManager()
         # создаём все кнопки и метки

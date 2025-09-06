@@ -109,6 +109,22 @@ class AudioManager:
         # По читать про reverse библеотеки pydub. Сделать проверку типу если аудио не загружено,
         # то выдовать сообщение
 
+    def change_speed(self, factor: float) -> None:
+        """
+        Меняет скорость воспроизведения.
+        :param factor: коэффициент скорости
+                       (>1.0 — замедлить, <1.0 — ускорить)
+        """
+        # если аудио загружено — меняем частоту дискретизации
+        if self.audio:
+            # новая частота = старая * factor
+            new_frame_rate = int(self.audio.frame_rate * factor)
+            # создаём новый сегмент с переопределённой частотой
+            self.audio = self.audio._spawn(self.audio.raw_data,
+                                           overrides={'frame_rate': new_frame_rate})
+            # устанавливаем частоту обратно для корректного экспорта
+            self.audio = self.audio.set_frame_rate(self.audio.frame_rate)
+
     def change_volume(self, db: float) -> None:
         """
                 Изменяет громкость аудио.
@@ -120,9 +136,8 @@ class AudioManager:
                 """
         if self.audio is None:
             raise RuntimeError("Аудиофайл не загружен")
-
-        self.audio = self.audio + db
-
+        if self.audio:
+            self.audio = self.audio + db
 
     def trim(self, start_time: int, end_time: int) -> None:
         """
@@ -134,19 +149,20 @@ class AudioManager:
             """
         if self.audio is None:
             raise RuntimeError("Аудиофайл не загружен")
+        if self.audio:
+            self.audio = self.audio[start_time:end_time]
 
-        self.audio = self.audio[start_time:end_time]
-
-
-    def save(self, output_path: str) -> None:
+    def save(self, export_path: str, format: str = None) -> None:
         """
-                Сохраняет измененный аудиофайл в указанный путь.
-
-                :param output_path: путь для сохранения файла
-                :raises RuntimeError: если аудио не загружено
-                """
-
-        if self.audio is None:
-            raise RuntimeError("Аудиофайл не загружен")
-
-        self.audio.export(output_path, format=os.path.splitext(output_path)[1][1:])
+        Сохраняет текущее аудио в файл.
+        :param export_path: полный путь для сохранения, включая расширение
+        :param format: (опционально) формат экспорта, иначе по расширению файла
+        """
+        # если аудио загружено — экспортируем его
+        if self.audio:
+            if format:
+                # экспорт с явным указанием формата
+                self.audio.export(export_path, format=format)
+            else:
+                # экспорт по расширению файла в export_path
+                self.audio.export(export_path)
